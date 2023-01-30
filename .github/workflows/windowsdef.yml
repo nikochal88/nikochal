@@ -1,4 +1,4 @@
- Check if the firewall is enabled
+# Check if the firewall is enabled
 
 $firewallStatus = (Get-NetFirewallProfile).Enabled
 
@@ -42,32 +42,34 @@ else {
 
 $defender = Get-MpComputerStatus
 
-if ($defender.AntivirusEnabled -eq "True") {
+if ($defender.DefenderEnabled) {
 
-    Write-Host "Windows Defender is enabled." -ForegroundColor Green
+    Write-Host "Windows Defender is enabled" -ForegroundColor Green
 
-    # Perform full scan in the background
+    # Perform full scan in the background and export results to C:\scanresults.txt
 
-    Start-Process -FilePath "C:\Program Files\Windows Defender\MpCmdRun.exe" -ArgumentList "-Scan -ScanType 2 -File C:\scanresults.txt" -PassThru
+    Start-Process -FilePath "powershell.exe" -ArgumentList "-Command `"Start-MpScan -ScanType FullScan | Out-File -FilePath 'C:\scanresults.txt' -Append`"" -NoNewWindow -PassThru
 
-    # Generate text file with scan results
+}
 
-} else {
+else {
 
-    Write-Host "Windows Defender is not enabled." -ForegroundColor Red
+    Write-Host "Windows Defender is not enabled" -ForegroundColor Red
 
-    # Store current status
+    # Store the current Defender status
 
-    $currentstatus = $defender.AntivirusEnabled
+    $currentStatus = $defender.DefenderEnabled
 
     # Enable Windows Defender
 
-    Set-MpPreference -DisableRealtimeMonitoring $false
+    Set-MpPreference -DisableRealtimeMonitoring $False
 
-    # Perform full scan in the background
+    # Perform full scan in the background and export results to C:\scanresults.txt
 
-    Start-Process -FilePath "C:\Program Files\Windows Defender\MpCmdRun.exe" -ArgumentList "-Scan -ScanType 2 -File C:\scanresults.txt" -PassThru
+    Start-Process -FilePath "powershell.exe" -ArgumentList "-Command `"Start-MpScan -ScanType FullScan | Out-File -FilePath 'C:\scanresults.txt' -Append`"" -NoNewWindow -PassThru
 
-    # Restore Windows Defender status
+    # Restore Defender status
 
-    Set-MpPreference -DisableRealtimeMonitoring $currentstatus
+    Set-MpPreference -DisableRealtimeMonitoring $currentStatus
+
+}
