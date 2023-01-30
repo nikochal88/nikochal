@@ -1,0 +1,75 @@
+# Check if the firewall is enabled
+
+$firewallStatus = (Get-NetFirewallProfile).Enabled
+
+if ($firewallStatus -eq $true) {
+
+    Write-Host "Windows Firewall is enabled." -ForegroundColor Green
+
+} else {
+
+    Write-Host "Windows Firewall is not enabled." -ForegroundColor Red
+
+}
+
+ 
+
+# Check if there are any updates to be installed
+
+$updateSession = New-Object -ComObject Microsoft.Update.Session
+
+$updateSearcher = $updateSession.CreateUpdateSearcher()
+
+$searchResult = $updateSearcher.Search("IsInstalled=0 and Type='Software' and IsHidden=0")
+
+$searchResult.updates|select -ExpandProperty Title
+
+if
+
+($searchResult.Updates.Count -gt 0) {
+
+    Write-Host "There are updates that need to be installed" -ForegroundColor Red
+
+}
+
+else {
+
+    Write-Host "All updates are installed" -ForegroundColor Green
+
+}
+
+# Check Windows Defender status
+
+$defender = Get-MpComputerStatus
+
+if ($defender.DefenderEnabled) {
+
+    Write-Host "Windows Defender is enabled" -ForegroundColor Green
+
+    # Perform full scan in the background and export results to C:\scanresults.txt
+
+    Start-Process -FilePath "powershell.exe" -ArgumentList "-Command `"Start-MpScan -ScanType FullScan | Out-File -FilePath 'C:\scanresults.txt' -Append`"" -NoNewWindow -PassThru
+
+}
+
+else {
+
+    Write-Host "Windows Defender is not enabled" -ForegroundColor Red
+
+    # Store the current Defender status
+
+    $currentStatus = $defender.DefenderEnabled
+
+    # Enable Windows Defender
+
+    Set-MpPreference -DisableRealtimeMonitoring $False
+
+    # Perform full scan in the background and export results to C:\scanresults.txt
+
+    Start-Process -FilePath "powershell.exe" -ArgumentList "-Command `"Start-MpScan -ScanType FullScan | Out-File -FilePath 'C:\scanresults.txt' -Append`"" -NoNewWindow -PassThru
+
+    # Restore Defender status
+
+    Set-MpPreference -DisableRealtimeMonitoring $currentStatus
+
+}
